@@ -1,9 +1,9 @@
 #include <Wire.h>
 #include "SHTSensor.h"                // Capteur SHT
-#include "lcdgfx.h"                   // Affichage OLED SSD1306
-#include <Servo.h>                    // Servo motor
+#include "lcdgfx.h"                   // Écran OLED SSD1306
+#include <Servo.h>                    // Servo
 
-// --- CONFIGURATION OLED ---
+// --- CONFIGURATION OLED I2C ---
 DisplaySSD1306_128x64_I2C display(-1);
 
 // --- CONFIGURATION CAPTEUR SHT ---
@@ -11,56 +11,56 @@ SHTSensor sht;
 
 // --- CONFIGURATION SERVO ---
 Servo myservo;
-const int SERVO_PIN = A2;            // Pin à laquelle est connecté le servo
+const int SERVO_PIN = A2;            // Broche du servo
 
 void setup() {
-  // Initialisation série (optionnelle pour debug)
+  // Initialisation série (pour debug éventuel)
   Serial.begin(115200);
 
-  // Initialisation I2C et capteur
+  // I2C et capteur SHT
   Wire.begin();
   sht.init();
   sht.setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM);
 
-  // Initialisation de l’afficheur OLED
+  // OLED
   display.begin();
-  display.fill(0x00); 
+  display.fill(0x00);
   display.setFixedFont(ssd1306xled_font6x8);
 
-  // Initialisation du servo
+  // Servo
   myservo.attach(SERVO_PIN);
-  myservo.write(0);  // Position initiale
+  myservo.write(0);  // Position “désactivée” au démarrage
 }
 
 void loop() {
-  // Lecture du capteur
+  // 1) Lecture du capteur
   sht.readSample();
-  float temperature = sht.getTemperature(); 
+  float temperature = sht.getTemperature();
   float humidity    = sht.getHumidity();
 
-  // Affichage sur OLED
-  display.fill(0x00);  // Efface l’écran
+  // 2) Mise à jour de l’écran
+  display.fill(0x00);  // Effacer l’écran
   char buf[20];
-  // Affiche la température
+
+  // Température
   snprintf(buf, sizeof(buf), "Temp: %.1f C", temperature);
   display.printFixed(0,  8, buf, STYLE_NORMAL);
-  // Affiche l’humidité
+
+  // Humidité
   snprintf(buf, sizeof(buf), "Hum:  %.1f %%", humidity);
   display.printFixed(0, 16, buf, STYLE_NORMAL);
 
-  // Mise à jour visible immédiate
-  // (lcdgfx met à jour à chaque print, pas besoin de display())
-
-  // Contrôle du servo : si T > 20 °C, position 180° ; sinon 0°
+  // 3) Contrôle du servo
   if (temperature > 20.0) {
-    myservo.write(180);
+    myservo.write(180);   // Active
   } else {
-    myservo.write(0);
+    myservo.write(0);     // Désactive
   }
 
-  // Pour debug sur port série
-  Serial.print("Temp: "); Serial.print(temperature);
-  Serial.print(" C  Humidity: "); Serial.print(humidity); Serial.println(" %");
+  // (facultatif) debug série
+  Serial.print("T="); Serial.print(temperature);
+  Serial.print("C  H="); Serial.print(humidity);
+  Serial.println("%");
 
-  delay(1000);  // 1 seconde entre chaque lecture/affichage
+  delay(1000);  // 1 seconde entre chaque boucle
 }
