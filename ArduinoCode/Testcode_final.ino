@@ -64,5 +64,5 @@ void loop() {
   Serial.print("C  H="); Serial.print(hum_i);
   Serial.println("%");
 
-  delay(5000);
+  delay(1000);
 }
